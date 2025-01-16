@@ -17,6 +17,7 @@ let ship = {
 let bullets = [];
 let enemies = [];
 let score = 0;
+let highScore = 0;
 let gameOver = false;
 let specialAbilityAvailable = true;
 
@@ -76,6 +77,7 @@ function detectCollisions() {
                 bullets.splice(bulletIndex, 1);
                 enemies.splice(enemyIndex, 1);
                 score += 10;
+                if (score > highScore) highScore = score;
             }
         });
     });
@@ -111,6 +113,7 @@ function drawScore() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
     ctx.fillText(`Score: ${score}`, 10, 30);
+    ctx.fillText(`High Score: ${highScore}`, 10, 60);
 }
 
 function useSpecialAbility() {
@@ -144,10 +147,18 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-function startGame() {
-    setInterval(spawnEnemy, 1500); // Slower enemy spawn rate
+function restartGame() {
+    score = 0;
+    bullets = [];
+    enemies = [];
+    gameOver = false;
+    specialAbilityAvailable = true;
+    ship.x = canvas.width / 2 - 25;
+    ship.y = canvas.height - 60;
     gameLoop();
 }
+
+document.getElementById('restartButton').addEventListener('click', restartGame);
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight') {
@@ -171,4 +182,42 @@ document.addEventListener('keyup', () => {
     ship.dx = 0;
 });
 
+// Mobile controls setup
+function setupMobileControls() {
+    const mobileControls = document.createElement('div');
+    mobileControls.id = 'mobileControls';
+
+    const leftButton = document.createElement('button');
+    leftButton.innerHTML = '◀';
+    leftButton.className = 'control-button';
+    leftButton.addEventListener('touchstart', () => ship.dx = -ship.speed);
+    leftButton.addEventListener('touchend', () => ship.dx = 0);
+
+    const shootButton = document.createElement('button');
+    shootButton.innerHTML = '⬆';
+    shootButton.className = 'control-button';
+    shootButton.addEventListener('touchstart', () => {
+        bullets.push({
+            x: ship.x + ship.width / 2 - 5,
+            y: ship.y,
+            width: 10,
+            height: 20,
+            speed: 5
+        });
+    });
+
+    const rightButton = document.createElement('button');
+    rightButton.innerHTML = '▶';
+    rightButton.className = 'control-button';
+    rightButton.addEventListener('touchstart', () => ship.dx = ship.speed);
+    rightButton.addEventListener('touchend', () => ship.dx = 0);
+
+    mobileControls.appendChild(leftButton);
+    mobileControls.appendChild(shootButton);
+    mobileControls.appendChild(rightButton);
+
+    document.body.appendChild(mobileControls);
+}
+
+setupMobileControls();
 startGame();
