@@ -9,17 +9,25 @@ let ship = {
     y: canvas.height - 60,
     width: 50,
     height: 50,
-    speed: 5,
-    dx: 0
+    speed: 3,
+    dx: 0,
+    shield: false
 };
 
 let bullets = [];
 let enemies = [];
 let score = 0;
 let gameOver = false;
+let specialAbilityAvailable = true;
+
+const enemyTypes = [
+    { width: 40, height: 40, speed: 2, color: 'green' },
+    { width: 60, height: 60, speed: 1, color: 'red' },
+    { width: 30, height: 30, speed: 3, color: 'yellow' }
+];
 
 function drawShip() {
-    ctx.fillStyle = 'blue';
+    ctx.fillStyle = ship.shield ? 'cyan' : 'blue';
     ctx.fillRect(ship.x, ship.y, ship.width, ship.height);
 }
 
@@ -29,7 +37,7 @@ function drawBullet(bullet) {
 }
 
 function drawEnemy(enemy) {
-    ctx.fillStyle = 'green';
+    ctx.fillStyle = enemy.color;
     ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
 }
 
@@ -71,15 +79,30 @@ function detectCollisions() {
             }
         });
     });
+    enemies.forEach((enemy, enemyIndex) => {
+        if (ship.x < enemy.x + enemy.width &&
+            ship.x + ship.width > enemy.x &&
+            ship.y < enemy.y + enemy.height &&
+            ship.y + ship.height > enemy.y) {
+            if (ship.shield) {
+                enemies.splice(enemyIndex, 1);
+                ship.shield = false;
+            } else {
+                gameOver = true;
+            }
+        }
+    });
 }
 
 function spawnEnemy() {
+    let type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
     let enemy = {
-        x: Math.random() * (canvas.width - 40),
-        y: -40,
-        width: 40,
-        height: 40,
-        speed: 2
+        x: Math.random() * (canvas.width - type.width),
+        y: -type.height,
+        width: type.width,
+        height: type.height,
+        speed: type.speed,
+        color: type.color
     };
     enemies.push(enemy);
 }
@@ -88,6 +111,16 @@ function drawScore() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
     ctx.fillText(`Score: ${score}`, 10, 30);
+}
+
+function useSpecialAbility() {
+    if (specialAbilityAvailable) {
+        ship.shield = true;
+        specialAbilityAvailable = false;
+        setTimeout(() => {
+            ship.shield = false;
+        }, 5000); // Shield lasts for 5 seconds
+    }
 }
 
 function gameLoop() {
@@ -112,7 +145,7 @@ function gameLoop() {
 }
 
 function startGame() {
-    setInterval(spawnEnemy, 1000);
+    setInterval(spawnEnemy, 1500); // Slower enemy spawn rate
     gameLoop();
 }
 
@@ -127,8 +160,10 @@ document.addEventListener('keydown', (e) => {
             y: ship.y,
             width: 10,
             height: 20,
-            speed: 7
+            speed: 5
         });
+    } else if (e.key === 's') {
+        useSpecialAbility();
     }
 });
 
